@@ -1,0 +1,103 @@
+import { TopicNode } from '../App';
+import { TopicNodeComponent } from './TopicNode';
+import { AddNodeDialog } from './AddNodeDialog';
+
+interface KnowledgeGraphProps {
+  nodes: TopicNode[];
+  onAddNode: (node: TopicNode) => void;
+  onUpdateNode: (node: TopicNode) => void;
+  onDeleteNode: (nodeId: string) => void;
+  showAddDialog: boolean;
+  setShowAddDialog: (show: boolean) => void;
+}
+
+export function KnowledgeGraph({
+  nodes,
+  onAddNode,
+  onUpdateNode,
+  onDeleteNode,
+  showAddDialog,
+  setShowAddDialog,
+}: KnowledgeGraphProps) {
+  // SVG 연결선 그리기
+  const renderConnections = () => {
+    const connections: JSX.Element[] = [];
+    
+    nodes.forEach(node => {
+      node.parentIds.forEach(parentId => {
+        const parentNode = nodes.find(n => n.id === parentId);
+        if (parentNode) {
+          const x1 = parentNode.position.x + 150; // 노드 width / 2
+          const y1 = parentNode.position.y + 100; // 노드 height
+          const x2 = node.position.x + 150;
+          const y2 = node.position.y;
+          
+          // 곡선 경로 생성
+          const midY = (y1 + y2) / 2;
+          const path = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+          
+          connections.push(
+            <path
+              key={`${parentId}-${node.id}`}
+              d={path}
+              stroke="#cbd5e1"
+              strokeWidth="2"
+              fill="none"
+              markerEnd="url(#arrowhead)"
+            />
+          );
+        }
+      });
+    });
+    
+    return connections;
+  };
+
+  // 최대 캔버스 크기 계산
+  const maxX = Math.max(...nodes.map(n => n.position.x + 300), 1000);
+  const maxY = Math.max(...nodes.map(n => n.position.y + 100), 1000);
+
+  return (
+    <div className="relative">
+      <div className="bg-white rounded-lg shadow-sm border overflow-auto" style={{ height: '70vh' }}>
+        <div className="relative" style={{ width: maxX, height: maxY }}>
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            width={maxX}
+            height={maxY}
+          >
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="10"
+                markerHeight="10"
+                refX="9"
+                refY="3"
+                orient="auto"
+              >
+                <polygon points="0 0, 10 3, 0 6" fill="#cbd5e1" />
+              </marker>
+            </defs>
+            {renderConnections()}
+          </svg>
+
+          {nodes.map(node => (
+            <TopicNodeComponent
+              key={node.id}
+              node={node}
+              onUpdate={onUpdateNode}
+              onDelete={onDeleteNode}
+            />
+          ))}
+        </div>
+      </div>
+
+      <AddNodeDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onAdd={onAddNode}
+        existingNodes={nodes}
+      />
+    </div>
+  );
+}
