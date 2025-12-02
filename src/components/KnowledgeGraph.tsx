@@ -1,23 +1,39 @@
-import { TopicNode } from '../App';
+import { TopicNode, Zone, Category } from '../App';
 import { TopicNodeComponent } from './TopicNode';
+import { ZoneComponent } from './ZoneComponent';
 import { AddNodeDialog } from './AddNodeDialog';
+import { AddZoneDialog } from './AddZoneDialog';
 
 interface KnowledgeGraphProps {
   nodes: TopicNode[];
+  zones: Zone[];
+  categories: Category[];
   onAddNode: (node: TopicNode) => void;
   onUpdateNode: (node: TopicNode) => void;
   onDeleteNode: (nodeId: string) => void;
+  onAddZone: (zone: Zone) => void;
+  onUpdateZone: (zone: Zone) => void;
+  onDeleteZone: (zoneId: string) => void;
   showAddDialog: boolean;
   setShowAddDialog: (show: boolean) => void;
+  showAddZoneDialog: boolean;
+  setShowAddZoneDialog: (show: boolean) => void;
 }
 
 export function KnowledgeGraph({
   nodes,
+  zones,
+  categories,
   onAddNode,
   onUpdateNode,
   onDeleteNode,
+  onAddZone,
+  onUpdateZone,
+  onDeleteZone,
   showAddDialog,
   setShowAddDialog,
+  showAddZoneDialog,
+  setShowAddZoneDialog,
 }: KnowledgeGraphProps) {
   // SVG 연결선 그리기
   const renderConnections = () => {
@@ -54,13 +70,31 @@ export function KnowledgeGraph({
   };
 
   // 최대 캔버스 크기 계산
-  const maxX = Math.max(...nodes.map(n => n.position.x + 300), 1000);
-  const maxY = Math.max(...nodes.map(n => n.position.y + 100), 1000);
+  const maxX = Math.max(
+    ...nodes.map(n => n.position.x + 300),
+    ...zones.map(z => z.position.x + z.size.width),
+    2000
+  );
+  const maxY = Math.max(
+    ...nodes.map(n => n.position.y + 100),
+    ...zones.map(z => z.position.y + z.size.height),
+    1500
+  );
 
   return (
-    <div className="relative">
-      <div className="bg-white rounded-lg shadow-sm border overflow-auto" style={{ height: '70vh' }}>
-        <div className="relative" style={{ width: maxX, height: maxY }}>
+    <div className="relative w-full h-full">
+      <div className="w-full h-full bg-white overflow-auto">
+        <div className="relative" style={{ width: maxX, height: maxY, minHeight: '100%' }}>
+          {/* Zones (배경) */}
+          {zones.map(zone => (
+            <ZoneComponent
+              key={zone.id}
+              zone={zone}
+              onUpdate={onUpdateZone}
+              onDelete={onDeleteZone}
+            />
+          ))}
+
           <svg
             className="absolute inset-0 pointer-events-none"
             width={maxX}
@@ -85,6 +119,7 @@ export function KnowledgeGraph({
             <TopicNodeComponent
               key={node.id}
               node={node}
+              categories={categories}
               onUpdate={onUpdateNode}
               onDelete={onDeleteNode}
             />
@@ -97,6 +132,13 @@ export function KnowledgeGraph({
         onOpenChange={setShowAddDialog}
         onAdd={onAddNode}
         existingNodes={nodes}
+        categories={categories}
+      />
+
+      <AddZoneDialog
+        open={showAddZoneDialog}
+        onOpenChange={setShowAddZoneDialog}
+        onAdd={onAddZone}
       />
     </div>
   );

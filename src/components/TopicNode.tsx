@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TopicNode } from '../App';
+import { TopicNode, Category } from '../App';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { ExternalLink, Edit2, Trash2, GripVertical } from 'lucide-react';
@@ -7,28 +7,18 @@ import { EditNodeDialog } from './EditNodeDialog';
 
 interface TopicNodeProps {
   node: TopicNode;
+  categories: Category[];
   onUpdate: (node: TopicNode) => void;
   onDelete: (nodeId: string) => void;
 }
 
-const categoryColors = {
-  math: 'bg-amber-500',
-  ml: 'bg-blue-500',
-  dl: 'bg-purple-500',
-  nlp: 'bg-emerald-500',
-};
-
-const categoryBorderColors = {
-  math: 'border-amber-200',
-  ml: 'border-blue-200',
-  dl: 'border-purple-200',
-  nlp: 'border-emerald-200',
-};
-
-export function TopicNodeComponent({ node, onUpdate, onDelete }: TopicNodeProps) {
+export function TopicNodeComponent({ node, categories, onUpdate, onDelete }: TopicNodeProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const category = categories.find(c => c.id === node.category);
+  const categoryColor = category?.color || '#6366f1';
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -68,15 +58,25 @@ export function TopicNodeComponent({ node, onUpdate, onDelete }: TopicNodeProps)
     });
   };
 
+  // Helper function to lighten color for border
+  const lightenColor = (color: string) => {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, 0.3)`;
+  };
+
   return (
     <>
       <Card
-        className={`absolute w-[300px] border-2 ${categoryBorderColors[node.category]} cursor-move hover:shadow-lg transition-shadow ${
+        className={`absolute w-[300px] border-2 cursor-move hover:shadow-lg transition-shadow ${
           isDragging ? 'shadow-xl opacity-80' : ''
         }`}
         style={{
           left: node.position.x,
           top: node.position.y,
+          borderColor: lightenColor(categoryColor),
         }}
         onMouseDown={handleMouseDown}
       >
@@ -84,7 +84,10 @@ export function TopicNodeComponent({ node, onUpdate, onDelete }: TopicNodeProps)
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 flex-1">
               <GripVertical className="size-4 text-slate-400" />
-              <div className={`w-1 h-8 ${categoryColors[node.category]} rounded`}></div>
+              <div 
+                className="w-1 h-8 rounded" 
+                style={{ backgroundColor: categoryColor }}
+              ></div>
               <h3 className="text-slate-900">{node.title}</h3>
             </div>
             <div className="flex gap-1">
@@ -139,6 +142,7 @@ export function TopicNodeComponent({ node, onUpdate, onDelete }: TopicNodeProps)
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         node={node}
+        categories={categories}
         onUpdate={onUpdate}
       />
     </>

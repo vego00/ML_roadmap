@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TopicNode } from '../App';
+import { TopicNode, Category } from '../App';
 import {
   Dialog,
   DialogContent,
@@ -24,10 +24,11 @@ interface EditNodeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   node: TopicNode;
+  categories: Category[];
   onUpdate: (node: TopicNode) => void;
 }
 
-export function EditNodeDialog({ open, onOpenChange, node, onUpdate }: EditNodeDialogProps) {
+export function EditNodeDialog({ open, onOpenChange, node, categories, onUpdate }: EditNodeDialogProps) {
   const [title, setTitle] = useState(node.title);
   const [description, setDescription] = useState(node.description);
   const [category, setCategory] = useState(node.category);
@@ -97,15 +98,22 @@ export function EditNodeDialog({ open, onOpenChange, node, onUpdate }: EditNodeD
 
           <div className="space-y-2">
             <Label htmlFor="edit-category">카테고리</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as TopicNode['category'])}>
+            <Select value={category} onValueChange={(value) => setCategory(value)}>
               <SelectTrigger id="edit-category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="math">수학 기초</SelectItem>
-                <SelectItem value="ml">머신러닝</SelectItem>
-                <SelectItem value="dl">딥러닝</SelectItem>
-                <SelectItem value="nlp">NLP</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded" 
+                        style={{ backgroundColor: cat.color }}
+                      ></div>
+                      {cat.name}
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

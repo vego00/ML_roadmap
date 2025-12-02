@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TopicNode } from '../App';
+import { TopicNode, Category } from '../App';
 import {
   Dialog,
   DialogContent,
@@ -25,12 +25,13 @@ interface AddNodeDialogProps {
   onOpenChange: (open: boolean) => void;
   onAdd: (node: TopicNode) => void;
   existingNodes: TopicNode[];
+  categories: Category[];
 }
 
-export function AddNodeDialog({ open, onOpenChange, onAdd, existingNodes }: AddNodeDialogProps) {
+export function AddNodeDialog({ open, onOpenChange, onAdd, existingNodes, categories }: AddNodeDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<TopicNode['category']>('ml');
+  const [category, setCategory] = useState<string>(categories[0]?.id || '');
   const [links, setLinks] = useState<string[]>(['']);
   const [selectedParents, setSelectedParents] = useState<string[]>([]);
 
@@ -66,7 +67,7 @@ export function AddNodeDialog({ open, onOpenChange, onAdd, existingNodes }: AddN
     // Reset form
     setTitle('');
     setDescription('');
-    setCategory('ml');
+    setCategory(categories[0]?.id || '');
     setLinks(['']);
     setSelectedParents([]);
   };
@@ -110,15 +111,22 @@ export function AddNodeDialog({ open, onOpenChange, onAdd, existingNodes }: AddN
 
           <div className="space-y-2">
             <Label htmlFor="category">카테고리</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as TopicNode['category'])}>
+            <Select value={category} onValueChange={(value) => setCategory(value)}>
               <SelectTrigger id="category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="math">수학 기초</SelectItem>
-                <SelectItem value="ml">머신러닝</SelectItem>
-                <SelectItem value="dl">딥러닝</SelectItem>
-                <SelectItem value="nlp">NLP</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded" 
+                        style={{ backgroundColor: cat.color }}
+                      ></div>
+                      {cat.name}
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

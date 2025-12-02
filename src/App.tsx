@@ -1,19 +1,57 @@
 import { useState } from 'react';
 import { KnowledgeGraph } from './components/KnowledgeGraph';
-import { Button } from './components/ui/button';
-import { Plus, Github } from 'lucide-react';
+import { Sidebar } from './components/Sidebar';
+import { CategoryManager } from './components/CategoryManager';
+
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
 
 export interface TopicNode {
   id: string;
   title: string;
   description: string;
-  category: 'ml' | 'dl' | 'nlp' | 'math';
+  category: string;
   links: string[];
   position: { x: number; y: number };
   parentIds: string[];
 }
 
+export interface Zone {
+  id: string;
+  name: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  color: string;
+}
+
 function App() {
+  const [categories, setCategories] = useState<Category[]>([
+    { id: 'math', name: '수학 기초', color: '#f59e0b' },
+    { id: 'ml', name: '머신러닝', color: '#3b82f6' },
+    { id: 'dl', name: '딥러닝', color: '#a855f7' },
+    { id: 'nlp', name: 'NLP', color: '#10b981' },
+  ]);
+
+  const [zones, setZones] = useState<Zone[]>([
+    {
+      id: '1',
+      name: '기초 개념',
+      position: { x: 50, y: 20 },
+      size: { width: 600, height: 300 },
+      color: '#fef3c7',
+    },
+    {
+      id: '2',
+      name: '시퀀스 모델',
+      position: { x: 450, y: 380 },
+      size: { width: 250, height: 220 },
+      color: '#ddd6fe',
+    },
+  ]);
+
   const [nodes, setNodes] = useState<TopicNode[]>([
     {
       id: '1',
@@ -81,6 +119,9 @@ function App() {
   ]);
 
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showAddZoneDialog, setShowAddZoneDialog] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleAddNode = (newNode: TopicNode) => {
     setNodes([...nodes, newNode]);
@@ -95,55 +136,54 @@ function App() {
     setNodes(nodes.filter(node => node.id !== nodeId));
   };
 
+  const handleAddZone = (newZone: Zone) => {
+    setZones([...zones, newZone]);
+    setShowAddZoneDialog(false);
+  };
+
+  const handleUpdateZone = (updatedZone: Zone) => {
+    setZones(zones.map(zone => zone.id === updatedZone.id ? updatedZone : zone));
+  };
+
+  const handleDeleteZone = (zoneId: string) => {
+    setZones(zones.filter(zone => zone.id !== zoneId));
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-slate-900">ML/DL/NLP 학습 로드맵</h1>
-            <p className="text-slate-600 text-sm mt-1">기술 발전 과정을 한눈에</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setShowAddDialog(true)}
-              className="gap-2"
-            >
-              <Plus className="size-4" />
-              토픽 추가
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="h-screen flex overflow-hidden bg-slate-50">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        categories={categories}
+        onAddNode={() => setShowAddDialog(true)}
+        onAddZone={() => setShowAddZoneDialog(true)}
+        onManageCategories={() => setShowCategoryManager(true)}
+      />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-amber-500"></div>
-            <span className="text-sm text-slate-700">수학 기초</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-blue-500"></div>
-            <span className="text-sm text-slate-700">머신러닝</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-purple-500"></div>
-            <span className="text-sm text-slate-700">딥러닝</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-emerald-500"></div>
-            <span className="text-sm text-slate-700">NLP</span>
-          </div>
-        </div>
-
+      <main className="flex-1 overflow-hidden">
         <KnowledgeGraph
           nodes={nodes}
+          zones={zones}
+          categories={categories}
           onAddNode={handleAddNode}
           onUpdateNode={handleUpdateNode}
           onDeleteNode={handleDeleteNode}
+          onAddZone={handleAddZone}
+          onUpdateZone={handleUpdateZone}
+          onDeleteZone={handleDeleteZone}
           showAddDialog={showAddDialog}
           setShowAddDialog={setShowAddDialog}
+          showAddZoneDialog={showAddZoneDialog}
+          setShowAddZoneDialog={setShowAddZoneDialog}
         />
       </main>
+
+      <CategoryManager
+        open={showCategoryManager}
+        onOpenChange={setShowCategoryManager}
+        categories={categories}
+        onUpdateCategories={setCategories}
+      />
     </div>
   );
 }
